@@ -1,0 +1,30 @@
+version: 2.1
+jobs:
+  build-debug:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - run:
+          name: Hugepages and CPU
+          command: sudo sysctl -w vm.nr_hugepages=1280; grep -i hugepages_total /proc/meminfo; nproc; grep -m1 'model name' /proc/cpuinfo
+      - checkout
+      - run:
+          name: Unpack
+          command: tar xzf egg.tgz
+      - run:
+          name: Toolchain
+          command: sudo apt-get update && sudo apt-get install -y cmake g++
+      - run:
+          name: Configure
+          command: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+      - run:
+          name: Build
+          command: cmake --build build --target build-debug -j4
+      - run:
+          name: Run
+          command: LIONSS_LP=1 ./build/build-debug
+workflows:
+  main:
+    jobs:
+      - build-debug
